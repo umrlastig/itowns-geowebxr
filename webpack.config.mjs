@@ -20,6 +20,11 @@ const config = (env) => {
             main: './src/index.js',
         },
         module: {
+            parser: {
+                javascript: {
+                    url: false,
+                },
+            },
             rules: [
                 {
                     test: /\.(?:js|mjs|cjs)$/,
