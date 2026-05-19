@@ -11,3 +11,94 @@ html, body {
     z-index: 0;
     height: 100%;
 }
+#description { display: none; }
+#modeSelection {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(135deg, #0d1b2a, #1b2838, #162032);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    z-index: 1000;
+    padding: 20px;
+    box-sizing: border-box;
+}
+#modeSelection h1 {
+    font-size: 1.7em;
+    margin: 0 0 4px 0;
+    color: #e94560;
+    text-align: center;
+}
+#modeSelection .subtitle {
+    font-size: 0.85em;
+    color: #8899aa;
+    margin-bottom: 32px;
+    text-align: center;
+}
+.mode-cards {
+    display: flex;
+    gap: 18px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+}
+.mode-card {
+    background: rgba(255,255,255,0.06);
+    border: 2px solid rgba(255,255,255,0.12);
+    border-radius: 14px;
+    padding: 24px 20px;
+    width: 210px;
+    cursor: pointer;
+    transition: all 0.25s;
+    text-align: center;
+    user-select: none;
+}
+.mode-card:hover {
+    background: rgba(255,255,255,0.12);
+    border-color: rgba(233,69,96,0.6);
+    transform: translateY(-3px);
+}
+.mode-card.selected {
+    background: rgba(233,69,96,0.18);
+    border-color: #e94560;
+    box-shadow: 0 0 24px rgba(233,69,96,0.35);
+}
+.mode-letter {
+    font-size: 3em;
+    font-weight: 700;
+    color: #e94560;
+    line-height: 1;
+    margin-bottom: 10px;
+}
+.mode-card h2 { font-size: 0.95em; margin: 0 0 8px; }
+.mode-card p  { font-size: 0.78em; color: #aabbcc; margin: 0; line-height: 1.45; }
+#startBtn {
+    padding: 13px 44px;
+    font-size: 1.05em;
+    background: #e94560;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    opacity: 0.35;
+    pointer-events: none;
+    transition: opacity 0.25s, background 0.2s;
+}
+#startBtn.ready { opacity: 1; pointer-events: auto; }
+#startBtn:hover { background: #c73350; }
+#prevPathBtn {
+    margin-top: 12px;
+    padding: 9px 26px;
+    font-size: 0.88em;
+    background: transparent;
+    color: #44dd88;
+    border: 1.5px solid #44dd88;
+    border-radius: 8px;
+    cursor: pointer;
+    display: none;
+    transition: background 0.2s;
+}
+#prevPathBtn:hover { background: rgba(68,221,136,0.15); }

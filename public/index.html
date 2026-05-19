@@ -9,7 +9,34 @@
         <link rel="stylesheet" href="styles/itowns.css">
     </head>
     <body>
+        <div id="modeSelection">
+            <h1>STAG — Médiathèque de Loos-en-Gohelle</h1>
+            <p class="subtitle">Expérimentation · Sélectionnez le mode d'interaction avant de démarrer</p>
+            <div class="mode-cards">
+                <div class="mode-card" data-mode="A">
+                    <div class="mode-letter">A</div>
+                    <h2>Maquette virtuelle</h2>
+                    <p>Pointez la manette vers les maquettes réduites au sol et pressez la gâchette pour sélectionner</p>
+                </div>
+                <div class="mode-card" data-mode="B">
+                    <div class="mode-letter">B</div>
+                    <h2>Navigation au pad</h2>
+                    <p>Utilisez le joystick droit ← → pour défiler les scénarios affichés en grandeur nature</p>
+                </div>
+                <div class="mode-card" data-mode="C">
+                    <div class="mode-letter">C</div>
+                    <h2>Maquette physique</h2>
+                    <p>Pointez vers la maquette imprimée — un halo virtuel apparaît pour confirmer le scénario</p>
+                </div>
+            </div>
+            <button id="startBtn">Démarrer l'expérience XR</button>
+            <button id="prevPathBtn">⬇ Télécharger le parcours précédent</button>
+        </div>
         <div id="viewerDiv"></div>
+        <div id="description">
+            <p><b>STAG — Loos-en-Gohelle</b></p>
+            <ul id="info"></ul>
+        </div>
         <script src="./main.bundle.js"></script>
     </body>
 </html>
