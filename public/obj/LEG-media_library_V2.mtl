@@ -1,0 +1,72 @@
+# Blender 4.4.3 MTL File: 'LEG-media_library_V2.blend'
+# www.blender.org
+
+newmtl Metal.green.albedo_512px
+Ns 9.111576
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd ./texture/metal.green_albedo_512px.jpg
+
+newmtl brick.001.albedo_512px
+Ns 9.111576
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd ./texture/brick.001_albedo_512px.jpg
+
+newmtl brick.002.albedo_512px
+Ns 9.111576
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd ./texture/brick.002_albedo_512px.jpg
+
+newmtl ground.002medialibrary.albedo_512px.
+Ns 9.111576
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd ./texture/ground.002medialibrary_albedo_512px.jpg
+
+newmtl roof.001.albedo_512px
+Ns 9.111576
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd ./texture/roof.001_albedo_512px.jpg
+
+newmtl roof.005.albedo_512px
+Ns 9.111576
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd ./texture/roof.005_albedo_512px.jpg
+
+newmtl trimsheet.001.albedo_512px
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd ./texture/trimsheet.001_albedo_512px.jpg

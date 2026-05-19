@@ -93,7 +93,7 @@ async function initXR(mode) {
 
     view.renderer.xr.enabled = true;
     viewerDiv.appendChild(XRButton.createButton(view.renderer, {
-        requiredFeatures: ['unbounded'],
+        requiredFeatures: ['local'],
         // depthSensing: {
         //     usagePreference: ['gpu-optimized', 'cpu-optimized'],
         //     dataFormatPreference: ['float32', 'luminance-alpha'],
@@ -105,12 +105,12 @@ async function initXR(mode) {
         config.source = new itowns.WMTSSource(config.source);
         view.addLayer(new itowns.ElevationLayer(config.id, config));
     }
-    itowns.Fetcher.json('./layers/JSONLayers/Ortho.json').then(config => {
+    itowns.Fetcher.json('./JSONLayers/Ortho.json').then(config => {
         config.source = new itowns.WMTSSource(config.source);
         view.addLayer(new itowns.ColorLayer('Ortho', config));
     });
-    itowns.Fetcher.json('./layers/JSONLayers/IGN_MNT_HIGHRES.json').then(addElevation);
-    itowns.Fetcher.json('./layers/JSONLayers/WORLD_DTM.json').then(addElevation);
+    itowns.Fetcher.json('./JSONLayers/IGN_MNT_HIGHRES.json').then(addElevation);
+    itowns.Fetcher.json('./JSONLayers/WORLD_DTM.json').then(addElevation);
 
     // WFS buildings
     // const wfsSrc = new itowns.WFSSource({
@@ -154,7 +154,7 @@ function setTransparentData(view) {
             findMeshinChildren(children);
         }
     }
-    view.renderer.setClearColor(new itowns.THREE.Color(), 0);
+    view.renderer.setClearColor(new THREE.Color(), 0);
     view.tileLayer.opacity = 0;
     const layer = view.getLayers().find(l => l.id === 'WFS Building');
     if (layer) {
