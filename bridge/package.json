@@ -1,0 +1,23 @@
+{
+  "name": "stag-gnss-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Localhost bridge from GNSS Master (NMEA over TCP) to WebSocket JSON for the STAG GeoWebXR examples",
+  "type": "module",
+  "main": "bridge.js",
+  "bin": {
+    "stag-gnss-bridge": "bridge.js"
+  },
+  "scripts": {
+    "start": "node bridge.js",
+    "replay": "node bridge.js --replay samples/synthetic-walk.nmea --loop",
+    "make-sample": "node samples/make-synthetic-walk.js > samples/synthetic-walk.nmea"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "ws": "8.18.1"
+  },
+  "license": "(CECILL-B OR MIT)"
+}

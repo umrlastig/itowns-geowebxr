@@ -4,6 +4,8 @@ import { XRButton } from 'three/addons/webxr/XRButton.js';
 import { createText } from 'three/addons/webxr/Text2D.js';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
+import { BridgeProvider, FixedProvider, installGeoWebXR } from './geowebxr/index.js';
+import { applyGeoPose } from './stag/geoAnchor.js';
 
 // ==================== MODE SELECTION ====================
 let selectedMode = null;
@@ -44,43 +46,60 @@ const SCENARIO_COLORS = [0x4488ff, 0xff8844, 0x44dd88];
 // Heading adjustments degrees, around local "up".
 const HEADING_DEG   = -45;
 
-// ==================== GNSS ====================
-let TCP_status = 'Disconnected';
-let data = { geo: { longitude: null, latitude: null, altitude: null }, rotation: { heading: null, pitch: null } };
+// ==================== GNSS / GeoWebXR ====================
+// GNSS source: the local bridge (bridge/) by default, ?gnss=ws://host:port for
+// another bridge, or ?gnss=fixed:lat,lon,alt,heading for desktop/emulator tests.
+function createGnssProvider() {
+    const param = new URLSearchParams(location.search).get('gnss') || 'ws://127.0.0.1:5005';
+    if (param.startsWith('fixed:')) {
+        const [lat, lon, alt, headingDeg] = param.slice('fixed:'.length).split(',').map(Number);
+        return new FixedProvider({ lat, lon, alt, headingDeg });
+    }
+    return new BridgeProvider(param);
+}
 
-async function waitForGNSS() {
-    return new Promise((resolve, reject) => {
-        const ws = new WebSocket('wss://10.73.118.207:5005');
-        ws.onopen  = () => { TCP_status = 'Connected'; };
-        ws.onmessage = (event) => {
-            try {
-                const gnss = JSON.parse(event.data);
-                if (gnss.valid) { ws.close(); resolve(gnss); }
-            } catch (e) { console.warn('GNSS parse error:', e); }
-        };
-        ws.onerror = (e) => { TCP_status = 'Disconnected'; reject(e); };
-        ws.onclose = () => { TCP_status = 'Disconnected'; };
+// Antenna mounting on the headset (x right, y up, z back, meters).
+// baselineInViewer: direction master → slave antenna; leverArm: master antenna
+// position relative to the headset origin. To be measured on the prototype.
+const GEOWEBXR_OPTIONS = {
+    baselineInViewer: [1, 0, 0],
+    leverArm: [0, 0, 0],
+};
+
+function showGeoStatus(text) {
+    console.log(`[GeoWebXR] ${text}`);
+    document.getElementById('info').innerHTML = `<li>${text}</li>`;
+}
+
+/** Keep the XR scene root (groupXR) at the geopose of the 'geo' reference space. */
+function setupGeoReferencing(view, space) {
+    const apply = () => {
+        const geopose = space.geopose;
+        if (!geopose) {
+            showGeoStatus('Geopose lost (tracking reset), re-estimating — stand still');
+            return;
+        }
+        applyGeoPose(view.webXR.vrControls.groupXR, geopose);
+        view.notifyChange();
+        const { lat, lon, h } = geopose.position;
+        showGeoStatus(`Geopose: ${lat.toFixed(7)}, ${lon.toFixed(7)}, ${h.toFixed(2)} m — `
+            + `heading ${geopose.headingDeg.toFixed(2)}° ± ${geopose.accuracy.headingDeg.toFixed(2)}° `
+            + `(${geopose.stats.kept}/${geopose.stats.samples} epochs)`);
+    };
+    space.addEventListener('geoposechange', apply);
+    space.addEventListener('geostatus', ({ detail }) => {
+        if (detail.status === 'calibrating' && detail.progress) {
+            const { accepted, reasons } = detail.progress;
+            showGeoStatus(`Calibrating, stand still: ${accepted} epochs accepted, rejected ${JSON.stringify(reasons)}`);
+        } else if (detail.status === 'error') {
+            showGeoStatus(detail.error.message);
+        }
     });
+    if (space.geopose) { apply(); }
 }
 
 // ==================== INIT XR ====================
 async function initXR(mode) {
-    let geopose;
-    // try {
-    //     const gnss = await waitForGNSS();
-    //     data.geo      = { longitude: gnss.lon, latitude: gnss.lat, altitude: gnss.alt };
-    //     data.rotation = { heading: gnss.headingDeg, pitch: gnss.pitchDeg };
-    //     TCP_status    = 'Connected';
-    //     geopose = fromGNSS(gnss, gnss.rotation.yaw, gnss.rotation.pitch, gnss.rotation.roll);
-    //     geopose.validate();
-    // } catch (e) {
-    //     data.geo = DEFAULT_POS;
-    //     console.warn('GNSS unavailable, using default position.', e);
-    //     geopose = new GeoPose(data.geo.latitude, data.geo.longitude, 0, 0, 0, 0);
-    // }
-
-    // itowns.updateGNSSStatus(TCP_status, data);
-
     // Camera centered on the mediatheque, ~80 m back, tilted 30° down, heading toward the building
     const placement = {
         coord:   new itowns.Coordinates('EPSG:4326', 2.794119, 50.457058),
@@ -92,8 +111,11 @@ async function initXR(mode) {
     const view = new itowns.GlobeView(viewerDiv, placement, { webXR: { controllers: true, cameraOnGround: true } });
 
     view.renderer.xr.enabled = true;
+    // 'geo' reference space: the XR origin is georeferenced from the GNSS
+    installGeoWebXR({ provider: createGnssProvider(), estimator: GEOWEBXR_OPTIONS });
+    view.renderer.xr.setReferenceSpaceType('geo');
     viewerDiv.appendChild(XRButton.createButton(view.renderer, {
-        requiredFeatures: ['local'],
+        requiredFeatures: ['local', 'geo'],
         // depthSensing: {
         //     usagePreference: ['gpu-optimized', 'cpu-optimized'],
         //     dataFormatPreference: ['float32', 'luminance-alpha'],
@@ -135,7 +157,7 @@ async function initXR(mode) {
     //     style: { fill: { color: colorFn, opacity: 0.2, base_altitude: altitudeFn, extrusion_height: extrudeFn } },
     // }));
 
-    setupMediathequeXR(view, createText, data.rotation, mode);
+    setupMediathequeXR(view, mode);
 }
 
 function setTransparentData(view) {
@@ -323,13 +345,20 @@ function downloadGeoJSON(geojson, mode, startTime) {
 }
 
 // ==================== MAIN XR SETUP (mode dispatcher) ====================
-function setupMediathequeXR(view, createText, rotation, mode) {
+function setupMediathequeXR(view, mode) {
     const xr = view.renderer.xr;
     let tracker = null;
 
     xr.addEventListener('sessionstart', async function () {
         const vrControls = view.webXR.vrControls;
         const session    = xr.getSession ? xr.getSession() : this.getSession();
+
+        const space = xr.getReferenceSpace();
+        if (space && space.geoXR) {
+            setupGeoReferencing(view, space);
+        } else {
+            console.warn('GeoWebXR unavailable: the scene is not georeferenced');
+        }
 
         // Start recording the user's path immediately
         tracker = startPathTracking(view, mode);
@@ -438,9 +467,9 @@ function setupModeB(view, vrControls, inSituModels, xr) {
     // After vrControls populates controllers, attach label to right controller
     // Use onRightButtonReleased as a hook to also update label
     vrControls.onRightButtonReleased = function (evt) {
-        // A button (4) = GNSS recalibration (kept from original)
+        // A button (4) = GNSS recalibration
         if (evt.message.buttonIndex === 4) {
-            rotateWithGNSS(view);
+            recalibrateGeoPose(view);
         }
     };
 }
@@ -656,43 +685,13 @@ function setupModeC(view, vrControls, inSituModels) {
     vrControls.onRightAxisChanged = function (ctrl) {};
 }
 
-// ==================== GNSS ROTATION (shared utility) ====================
-async function rotateWithGNSS(view) {
-    let pos;
-    try {
-        const res = await fetch('https://10.73.118.16:8082/geopos');
-        if (!res.ok) throw new Error('Network error');
-        pos = await res.json();
-        if (!pos || pos.worldPosition === undefined) throw new Error('Invalid GNSS response');
-    } catch (e) {
-        console.warn('GNSS fetch error:', e);
+// ==================== GNSS RECALIBRATION (shared utility) ====================
+// The user stands still for a few seconds while the geopose is re-estimated.
+function recalibrateGeoPose(view) {
+    const space = view.renderer.xr.getReferenceSpace();
+    if (!space || !space.geoXR) {
+        console.warn('GeoWebXR unavailable');
         return;
     }
-    try {
-        const headingRad = THREE.MathUtils.degToRad((pos.heading + 270) % 360);
-        const pitchRad   = THREE.MathUtils.degToRad(pos.pitch);
-        const groupXR    = view.webXR.vrControls.groupXR;
-        const baseOrientation = groupXR.quaternion.clone().normalize();
-
-        const Rz = new THREE.Matrix3().setFromMatrix4(new THREE.Matrix4().makeRotationZ(headingRad));
-        const Rx = new THREE.Matrix3().setFromMatrix4(new THREE.Matrix4().makeRotationX(pitchRad));
-        const worldPos = new THREE.Vector3(pos.worldPosition.x, pos.worldPosition.y, pos.worldPosition.z);
-        const bNorm    = worldPos.clone().normalize();
-
-        // Simplified Ry from baseline (mirrors xrCalibration logic)
-        const v1 = new THREE.Vector3(1, 0, 0).applyMatrix3(Rx);
-        const RzT = new THREE.Matrix3().copy(Rz).transpose();
-        const v2 = bNorm.clone().applyMatrix3(RzT);
-        const ryAngle = Math.atan2(v2.z, v2.x) - Math.atan2(v1.z, v1.x);
-
-        const Ry   = new THREE.Matrix3().setFromMatrix4(new THREE.Matrix4().makeRotationY(ryAngle));
-        const RzRyRx = new THREE.Matrix3().multiplyMatrices(Rz, new THREE.Matrix3().multiplyMatrices(Ry, Rx));
-        const q    = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().setFromMatrix3(RzRyRx));
-
-        groupXR.quaternion.multiplyQuaternions(q, baseOrientation);
-        groupXR.updateMatrixWorld();
-        view.notifyChange();
-    } catch (e) {
-        console.warn('Error applying GNSS rotation:', e);
-    }
+    space.geoXR.calibrate().catch(e => console.warn(e.message));
 }

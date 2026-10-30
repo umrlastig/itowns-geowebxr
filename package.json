@@ -16,14 +16,15 @@
     },
     "dependencies": {
         "itowns": "^2.46.1-next.52",
-        "proj4": "^2.19.10",
-        "three": "^0.174.0"
+        "postprocessing": "6.38.2",
+        "proj4": "^2.22.0",
+        "three": "^0.182.0"
     },
     "devDependencies": {
         "@babel/core": "^7.28.5",
         "@babel/preset-env": "^7.10.0",
         "@types/itowns": "^2.42.2",
-        "@types/three": "^0.174.0",
+        "@types/three": "^0.182.0",
         "@typescript-eslint/eslint-plugin": "^8.48.0",
         "@typescript-eslint/parser": "^8.48.0",
         "babel-loader": "^10.0.0",
